@@ -12,6 +12,9 @@ class Message {
         std::string value_;
 
     public:
+        Message()
+            : contains_value_(false) {}
+
         explicit Message(const std::string& key)
             : contains_value_(false),
             key_(key) {}
@@ -20,14 +23,14 @@ class Message {
             : contains_value_(true),
             key_(key), value_(value) {}
 
-        explicit Message(int fd)
-            : contains_value_(false) {
+        bool Deserialize(int fd) {
             if (ReadN(fd, (char*) &contains_value_, sizeof(contains_value_)) <= 0)
-                return;
+                return false;
             if (!ReadString(fd, &key_))
-                return;
-            if (contains_value_)
-                ReadString(fd, &value_);
+                return false;
+            if (contains_value_ && !ReadString(fd, &value_))
+                return false;
+            return true;
         }
 
         bool ContainsValue() const {
