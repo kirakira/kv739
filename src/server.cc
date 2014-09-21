@@ -86,11 +86,13 @@ int main() {
     }
 
     listen(fd,5);
+    cout << "Listening..." << endl;
     socklen_t clilen = sizeof(cli_addr);
     while (true) {
         int newsockfd = accept(fd, 
                 (struct sockaddr *) &cli_addr, 
                 &clilen);
+        cout << "New client" << endl;
         if (newsockfd < 0) {
             error("ERROR on accept");
             return -1;

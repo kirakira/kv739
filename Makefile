@@ -18,7 +18,7 @@ bin/server: bin/common.o src/server.cc
 
 bin/test: bin/lib739kv.so src/test.cc
 	mkdir -p bin/
-	g++ -o bin/test -Wall -Wextra bin/common.o bin/client.o src/test.cc
+	g++ -o bin/test -Wall -Wextra -Lbin/ -l739kv bin/common.o src/test.cc
 
 client: bin/lib739kv.so
 
