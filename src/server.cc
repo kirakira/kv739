@@ -6,11 +6,13 @@
 #include <netdb.h> 
 #include <unistd.h>
 
+#include "database.h"
 #include "message.h"
 
 using namespace std;
 
 int port = 8000;
+string database_file = "kv.db";
 
 void error(const char* str) {
     cerr << str << endl;
@@ -25,6 +27,7 @@ bool put(const string& key, const string& value, string* old_value) {
         ret = true;
     }
     database[key] = value;
+    database_put(database_file, key, value);
     return ret;
 }
 
@@ -68,6 +71,8 @@ void handle_client(int fd) {
 }
 
 int main() {
+    database_init(database_file, &database);
+    cout << "Initialized a database with " << database.size() << " entries." << endl;
     int fd = socket(AF_INET, SOCK_STREAM, 0);
     if (fd < 0) {
         error("ERROR opening socket");
