@@ -20,7 +20,7 @@ bin/database.o: src/database.h src/database.cc src/message.h
 
 bin/server: bin/common.o bin/database.o src/server.cc
 	mkdir -p bin/
-	g++ -o bin/server ${FLAGS} bin/common.o bin/database.o src/server.cc
+	g++ -o bin/server ${FLAGS} -pthread bin/common.o bin/database.o src/server.cc
 
 bin/test: bin/lib739kv.so src/test.cc src/database.h src/message.h
 	mkdir -p bin/
