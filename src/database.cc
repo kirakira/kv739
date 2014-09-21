@@ -1,14 +1,10 @@
 #include <fcntl.h>
 #include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 
 #include "database.h"
 #include "message.h"
 
 using namespace std;
-
-const mode_t mode644 = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH | S_ISUID | S_ISGID;
 
 void database_init(const string& file, map<string, string>* table) {
     table->clear();

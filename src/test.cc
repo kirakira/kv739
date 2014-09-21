@@ -1,15 +1,21 @@
 #include <iostream>
 #include <string>
 #include <cstring>
+#include <fcntl.h>
 #include <map>
 #include <set>
 #include <cstdlib>
 #include <ctime>
 #include <vector>
+#include <unistd.h>
 
 #include "client.h"
+#include "database.h"
+#include "message.h"
 
 using namespace std;
+
+string persistence_test_file = "kv_test_storage.db";
 
 char* BadStringConversion(const char* s) {
     int len = strlen(s);
@@ -46,6 +52,28 @@ string RandomString(int length) {
     for (int i = 0; i < length; ++i)
         ret += candidates[rand() % (sizeof(candidates) - 1)];
     return ret;
+}
+
+bool TestPersistence() {
+    int fd = open(persistence_test_file.c_str(), O_RDONLY);
+    map<string, string> table;
+    while (true) {
+        Message request;
+        if (!request.Deserialize(fd))
+            break;
+        table[request.key()] = request.value();
+    }
+    close(fd);
+
+    for (map<string, string>::iterator iter = table.begin();
+            iter != table.end();
+            ++iter) {
+        if (kv739_get(BadStringConversion(iter->first), buffer) != 0)
+            return false;
+        if (iter->second != buffer)
+            return false;
+    }
+    return true;
 }
 
 bool TestCorrectness() {
@@ -109,7 +137,7 @@ bool TestCorrectness() {
 pair<double, double> TestPerformance() {
     vector<string> get_requests;
     vector<pair<string, string> > put_requests;
-    int num_requests = 100000;
+    int num_requests = 50000;
 
     for (int i = 0; i < num_requests; ++i)
         get_requests.push_back(RandomString(4));
@@ -126,6 +154,22 @@ pair<double, double> TestPerformance() {
         kv739_put(BadStringConversion(put_requests[i].first), BadStringConversion(put_requests[i].second), buffer);
     t = clock() - t0;
     double put_thru = (double) num_requests / ((double) t / CLOCKS_PER_SEC);
+
+    map<string, string> table;
+    for (int i = 0; i < num_requests; ++i) {
+        if (kv739_get(BadStringConversion(get_requests[i]), buffer) == 0)
+            table[get_requests[i]] = buffer;
+        if (kv739_get(BadStringConversion(put_requests[i].first), buffer) == 0)
+            table[put_requests[i].first] = buffer;
+    }
+    int fd = open(persistence_test_file.c_str(), O_WRONLY | O_TRUNC | O_CREAT, mode644);
+    for (map<string, string>::iterator iter = table.begin();
+            iter != table.end();
+            ++iter) {
+        Message message(iter->first, iter->second);
+        message.Serialize(fd);
+    }
+    close(fd);
 
     return make_pair(get_thru, put_thru);
 }
@@ -146,6 +190,9 @@ int main() {
         cout << "Failed to init" << endl;
         return 1;
     }
+    bool persist_ok = TestPersistence();
+    if (!persist_ok)
+        cout << "Persistent test failed" << endl;
     if (!TestNaive())
         return 1;
     if (!TestCorrectness())
@@ -155,6 +202,7 @@ int main() {
     pair<double, double> thru = TestPerformance();
     cout << "Get throughput: " << thru.first << " req/s" << endl;
     cout << "Put throughput: " << thru.second << " req/s" << endl;
+    cout << "Persistent storage test: " << (persist_ok ? "Passed" : "Failed") << endl;
 
     return 0;
 }
