@@ -1,6 +1,7 @@
 #include <iostream>
 #include <map>
 #include <cstring>
+#include <signal.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -71,7 +72,10 @@ void handle_client(int fd) {
     }
 }
 
+void signal_handler(int) {}
+
 int main() {
+    signal(SIGPIPE, signal_handler);
     database_init(database_file, &database);
     cout << "Initialized a database with " << database.size() << " entries." << endl;
     int fd = socket(AF_INET, SOCK_STREAM, 0);
