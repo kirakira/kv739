@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <netdb.h> 
 #include <unistd.h>
 
@@ -83,6 +84,8 @@ int main() {
         error("ERROR opening socket");
         return -1;
     }
+    int on;
+    setsockopt(fd, SOL_TCP, TCP_NODELAY, &on, sizeof (on));
 
     struct sockaddr_in serv_addr, cli_addr;
     bzero((char *) &serv_addr, sizeof(serv_addr));
