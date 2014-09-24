@@ -36,5 +36,6 @@ void database_put(const string& file, const string& key, const string& value) {
     int fd = open(file.c_str(), O_WRONLY | O_APPEND | O_CREAT, mode644);
     Message request(key, value);
     request.Serialize(fd);
+    fsync(fd);
     close(fd);
 }

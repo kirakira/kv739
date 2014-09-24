@@ -18,6 +18,7 @@ using namespace std;
 
 int port = 8000;
 string database_file = "kv.db";
+bool synchronize = true;
 
 void error(const char* str) {
     cerr << str << endl;
@@ -38,10 +39,14 @@ bool put(const string& key, const string& value, string* old_value) {
     }
     database[key] = value;
 
-    pthread_mutex_lock(&writer_mutex);
-    outstanding_put_requests.push_back(make_pair(key, value));
-    pthread_mutex_unlock(&writer_mutex);
-    pthread_cond_signal(&writer_cond);
+    if (synchronize)
+        database_put(database_file, key, value);
+    else {
+        pthread_mutex_lock(&writer_mutex);
+        outstanding_put_requests.push_back(make_pair(key, value));
+        pthread_mutex_unlock(&writer_mutex);
+        pthread_cond_signal(&writer_cond);
+    }
 
     return ret;
 }
@@ -106,12 +111,25 @@ void init() {
     database_init(database_file, &database);
     cout << "Initialized a database with " << database.size() << " entries." << endl;
 
-    pthread_create(&writer_thread, NULL, database_writer_routine, NULL);
-    pthread_mutex_init(&writer_mutex, NULL);
-    pthread_cond_init(&writer_cond, NULL);
+    if (!synchronize) {
+        pthread_create(&writer_thread, NULL, database_writer_routine, NULL);
+        pthread_mutex_init(&writer_mutex, NULL);
+        pthread_cond_init(&writer_cond, NULL);
+    }
 }
 
-int main() {
+int main(int argc, char** argv) {
+    if (argc == 2) {
+        if (strcmp(argv[1], "sync") == 0)
+            synchronize = true;
+        else if (strcmp(argv[1], "async") == 0)
+            synchronize = false;
+        else {
+            cout << "Unrecoginized option: " << argv[1] << endl;
+            return 1;
+        }
+    }
+
     signal(SIGPIPE, signal_handler);
     init();
     int fd = socket(AF_INET, SOCK_STREAM, 0);
