@@ -4,6 +4,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <netdb.h> 
 #include <unistd.h>
 
@@ -26,6 +27,8 @@ int kv739_init(char* server) {
     fd = socket(AF_INET, SOCK_STREAM, 0);
     if (fd < 0)
         return -1;
+    int on;
+    setsockopt(fd, getprotobyname("TCP")->p_proto, TCP_NODELAY, &on, sizeof(on));
 
     char* server_address = new char[colon + 1]();
     memcpy(server_address, server, colon);

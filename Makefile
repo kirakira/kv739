@@ -9,10 +9,14 @@ bin/common.o: src/common.h src/common.cc src/message.h
 	mkdir -p bin/
 	g++ -o bin/common.o ${FLAGS} -c src/common.cc
 
-bin/lib739kv.so: bin/common.o src/client.h src/client.cc
+bin/common_pic.o: src/common.h src/common.cc src/message.h
 	mkdir -p bin/
-	g++ -o bin/client.o ${FLAGS} -c -fpic src/client.cc
-	g++ -shared -o bin/lib739kv.so bin/client.o bin/common.o
+	g++ -o bin/common_pic.o ${FLAGS} -c -fPIC src/common.cc
+
+bin/lib739kv.so: bin/common_pic.o src/client.h src/client.cc
+	mkdir -p bin/
+	g++ -o bin/client.o ${FLAGS} -c -fPIC src/client.cc
+	g++ -shared -o bin/lib739kv.so bin/client.o bin/common_pic.o
 
 bin/database.o: src/database.h src/database.cc src/message.h
 	mkdir -p bin/

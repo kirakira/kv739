@@ -2,9 +2,12 @@
 #include <map>
 #include <list>
 #include <pthread.h>
+#include <cstring>
+#include <signal.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <netdb.h> 
 #include <unistd.h>
 
@@ -97,6 +100,8 @@ void handle_client(int fd) {
     }
 }
 
+void signal_handler(int) {}
+
 void init() {
     database_init(database_file, &database);
     cout << "Initialized a database with " << database.size() << " entries." << endl;
@@ -107,12 +112,15 @@ void init() {
 }
 
 int main() {
+    signal(SIGPIPE, signal_handler);
     init();
     int fd = socket(AF_INET, SOCK_STREAM, 0);
     if (fd < 0) {
         error("ERROR opening socket");
         return -1;
     }
+    int on;
+    setsockopt(fd, getprotobyname("TCP")->p_proto, TCP_NODELAY, &on, sizeof(on));
 
     struct sockaddr_in serv_addr, cli_addr;
     bzero((char *) &serv_addr, sizeof(serv_addr));

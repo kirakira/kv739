@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <map>
 #include <set>
+#include <signal.h>
 #include <cstdlib>
 #include <ctime>
 #include <vector>
@@ -174,7 +175,10 @@ pair<double, double> TestPerformance() {
     return make_pair(get_thru, put_thru);
 }
 
+void signal_handler(int) {}
+
 int main() {
+    signal(SIGPIPE, signal_handler);
     srand(time(0));
     string address = "127.0.0.1", port = "8000";
     cout << "Server address [default " << address << "]: ";
