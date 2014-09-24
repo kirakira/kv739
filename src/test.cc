@@ -5,6 +5,7 @@
 #include <map>
 #include <set>
 #include <signal.h>
+#include <sys/time.h>
 #include <cstdlib>
 #include <ctime>
 #include <vector>
@@ -17,6 +18,14 @@
 using namespace std;
 
 string persistence_test_file = "kv_test_storage.db";
+
+double get_wall_time(){
+    struct timeval time;
+    if (gettimeofday(&time,NULL)){
+        return 0;
+    }
+    return (double)time.tv_sec + (double)time.tv_usec * .000001;
+}
 
 char* BadStringConversion(const char* s) {
     int len = strlen(s);
@@ -96,7 +105,7 @@ bool TestCorrectness() {
     }
 
     vector<string> keys_list(keys.begin(), keys.end());
-    int num_operations = 10000;
+    int num_operations = 100;
     for (int i = 0; i < num_operations; ++i) {
         string key = keys_list[rand() % keys_list.size()];
         string value = RandomString(4);
@@ -138,23 +147,23 @@ bool TestCorrectness() {
 pair<double, double> TestPerformance() {
     vector<string> get_requests;
     vector<pair<string, string> > put_requests;
-    int num_requests = 50000;
+    int num_requests = 500;
 
     for (int i = 0; i < num_requests; ++i)
         get_requests.push_back(RandomString(4));
-    clock_t t0 = clock();
+    double t0 = get_wall_time();
     for (int i = 0; i < num_requests; ++i)
         kv739_get(BadStringConversion(get_requests[i]), buffer);
-    clock_t t = clock() - t0;
-    double get_thru = (double) num_requests / ((double) t / CLOCKS_PER_SEC);
+    double t = get_wall_time() - t0;
+    double get_thru = (double) num_requests / ((double) t);
 
     for (int i = 0; i < num_requests; ++i)
         put_requests.push_back(make_pair(RandomString(10), RandomString(10)));
-    t0 = clock();
+    t0 = get_wall_time();
     for (int i = 0; i < num_requests; ++i)
         kv739_put(BadStringConversion(put_requests[i].first), BadStringConversion(put_requests[i].second), buffer);
-    t = clock() - t0;
-    double put_thru = (double) num_requests / ((double) t / CLOCKS_PER_SEC);
+    t = get_wall_time() - t0;
+    double put_thru = (double) num_requests / ((double) t);
 
     map<string, string> table;
     for (int i = 0; i < num_requests; ++i) {
