@@ -32,6 +32,23 @@ void database_init(const string& file, map<string, string>* table) {
     close(fd);
 }
 
+bool database_get(const string& file, const string& key, string *value) {
+    int fd = open(file.c_str(), O_RDONLY);
+    if (fd == -1)
+        return false;
+
+    while (true) {
+        Message request;
+        if (!request.Deserialize(fd))
+            break;
+        if (request.key() == key) {
+            *value = request.value();
+            return true;
+        }
+    }
+    return false;
+}
+
 void database_put(const string& file, const string& key, const string& value) {
     int fd = open(file.c_str(), O_WRONLY | O_APPEND | O_CREAT, mode644);
     Message request(key, value);

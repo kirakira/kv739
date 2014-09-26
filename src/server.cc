@@ -70,7 +70,9 @@ bool get(const string& key, string* value) {
     if (database.count(key) > 0) {
         *value = database[key];
         return true;
-    } else
+    } else if (database_get(database_file, key, value))
+        return true;
+    else
         return false;
 }
 
